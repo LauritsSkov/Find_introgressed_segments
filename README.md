@@ -1,13 +1,13 @@
 # Find_introgressed_segments
 Find introgressed segments from an msprime simulation.
 
-´´´bash
+´´´note
 python Keeptrack_of_introgressed.py -demography=Demography1.yaml 
 ´´´
 
 Will produce the following output of introgressed segments:
 
-´´´bash
+´´´note
 haplotype  start      end        admix_event                    admixtime 
 0          938695     1000000    Intro_NEA>NonAfrican           612.4     
 1          335085     641415     Intro_DEN>NonAfrican           689.7     
