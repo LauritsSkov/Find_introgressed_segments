@@ -5,7 +5,9 @@ Find introgressed segments from an msprime simulation.
 python Keeptrack_of_introgressed.py -demography=Demography1.yaml 
 ```
 
-Will produce the following output of introgressed segments:
+First look at the Demography1.yaml. There are multiple introgression events from Neanderthals and Denisovans. This script will keep track of them.
+
+Run the script to produce the following output of introgressed segments:
 
 ```note
 haplotype  start      end        admix_event                    admixtime 
@@ -17,3 +19,4 @@ haplotype  start      end        admix_event                    admixtime
 2          927098     939317     Intro_NEA>NonAfrican           435.3     
 3          449311     481743     Intro_NEA>NonAfrican           1551.7
 ```
+Note please feel free to play around with the parameters in the yaml file and use this for your own simulations.
