@@ -9,7 +9,7 @@ Will produce the following output of introgressed segments:
 
 ´´´note
 haplotype  start      end        admix_event                    admixtime 
-0          938695     1000000    Intro_NEA>NonAfrican           612.4     
+0          938695    1000000    Intro_NEA>NonAfrican           612.4     
 1          335085     641415     Intro_DEN>NonAfrican           689.7     
 1          654131     666516     Intro_NEA>NonAfrican           1551.7    
 1          779643     789331     Intro_DEN>NonAfrican           689.7     
