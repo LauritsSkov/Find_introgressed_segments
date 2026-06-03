@@ -10,13 +10,13 @@ First look at the Demography1.yaml. There are multiple introgression events from
 Run the script to produce the following output of introgressed segments:
 
 ```note
-haplotype  start      end        admix_event                    admixtime 
-0          938695     1000000    Intro_NEA>NonAfrican           612.4     
-1          335085     641415     Intro_DEN>NonAfrican           689.7     
-1          654131     666516     Intro_NEA>NonAfrican           1551.7    
-1          779643     789331     Intro_DEN>NonAfrican           689.7     
-2          709870     788552     Intro_DEN>NonAfrican           689.7     
-2          927098     939317     Intro_NEA>NonAfrican           435.3     
-3          449311     481743     Intro_NEA>NonAfrican           1551.7
+haplotype  pop           start      end        admix_event                    admixtime 
+0          NonAfrican    938695     1000000    Intro_NEA>NonAfrican           612.4     
+1          NonAfrican    335085     641415     Intro_DEN>NonAfrican           689.7     
+1          NonAfrican    654131     666516     Intro_NEA>NonAfrican           1551.7    
+1          NonAfrican    779643     789331     Intro_DEN>NonAfrican           689.7     
+2          NonAfrican    709870     788552     Intro_DEN>NonAfrican           689.7     
+2          NonAfrican    927098     939317     Intro_NEA>NonAfrican           435.3     
+3          NonAfrican    449311     481743     Intro_NEA>NonAfrican           1551.7
 ```
 Note please feel free to play around with the parameters in the yaml file and use this for your own simulations.
