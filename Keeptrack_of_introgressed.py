@@ -18,7 +18,7 @@ args = parser.parse_args()
 
 
 
-def get_introgressed_segments(ts, admixed_ind_from):
+def get_introgressed_segments(ts):
     """
     Optimized version: loops through trees once and processes overlapping migrations.
     """
@@ -26,21 +26,29 @@ def get_introgressed_segments(ts, admixed_ind_from):
     pop_to_number = {x.metadata['name']: x.id for x in ts.populations()}
     number_to_pop = {x.id: x.metadata['name'] for x in ts.populations()}
 
-    excluded_times = []
+    excluded_times = defaultdict(lambda: ['None',['None']])
     for event in demography.events:
         if type(event) == msprime.demography.PopulationSplit:
-            excluded_times.append(event.time)
+            derived_pop = event.derived
+            ancestral_pop = event.ancestral
+            excluded_times[event.time] = [event.derived, event.ancestral]
 
 
-    Testpopulation = set(ts.get_samples(pop_to_number[admixed_ind_from]))
+    sample_to_pop = defaultdict(str)
+    for pop in ts.populations():
+        for sample in ts.get_samples(pop.id):
+            sample_to_pop[sample] = pop.metadata['name']
+
     introgressed_seg = defaultdict(list)
 
     # ---- 1. collect relevant migrations ----
     mig_events = []
 
     for mr in ts.migrations():
-        if mr.time not in excluded_times:
-            mig_events.append(mr)
+        if number_to_pop[mr.source] in excluded_times[mr.time][0] and number_to_pop[mr.dest] == excluded_times[mr.time][1]:
+            continue
+
+        mig_events.append(mr)
 
     # sort by left coordinate
     mig_events.sort(key=lambda m: m.left)
@@ -76,8 +84,8 @@ def get_introgressed_segments(ts, admixed_ind_from):
             leaves = [x for x in tree.leaves(mr.node)]
 
             for l in leaves:
-                if l in Testpopulation:
-                    introgressed_seg[l, admixinfo].append([tree_left, tree_right])
+                #if l in Testpopulation:
+                introgressed_seg[l, admixinfo].append([tree_left, tree_right])
 
     
     def merge_overlapping(temp_tuple):
@@ -98,7 +106,7 @@ def get_introgressed_segments(ts, admixed_ind_from):
     for (haplotype, admix_event), segments in introgressed_seg.items():
         from_pop, to_pop, admixtime = admix_event.split('|')
         for start, end in merge_overlapping(segments):
-            merged_introgressed_segs.append((haplotype, start, end, f'{from_pop}>{to_pop}', admixtime))
+            merged_introgressed_segs.append((haplotype, sample_to_pop[haplotype], start, end, f'{from_pop}>{to_pop}', admixtime))
 
     return sorted(merged_introgressed_segs)
 
@@ -141,11 +149,9 @@ ts = msprime.sim_ancestry(
     random_seed=123)
 
 
-introgressed_segments = get_introgressed_segments(ts, admixed_ind_from = 'NonAfrican')
+introgressed_segments = get_introgressed_segments(ts)
 
-
-row = "{:<10} {:<10} {:<10} {:<30} {:<10}"
-print(row.format('haplotype', 'start', 'end',  'admix_event', 'admixtime') )
-for (haplotype, start, end,  admix_event, admixtime) in introgressed_segments:
-    print(row.format(haplotype, start, end,  admix_event, admixtime))
+print('haplotype', 'pop', 'start', 'end',  'admix_event', 'admixtime', sep = '\t')
+for (haplotype, pop, start, end,  admix_event, admixtime) in introgressed_segments:
+    print(haplotype, pop, start, end,  admix_event, admixtime, sep = '\t')
 
