@@ -5,7 +5,8 @@ Find introgressed segments from an msprime simulation.
 python Keeptrack_of_introgressed.py -demography=Demography1.yaml 
 ```
 
-First look at the Demography1.yaml. There are multiple introgression events from Neanderthals and Denisovans. This script will keep track of them.
+First look at the Demography1.yaml. There are multiple introgression events Denisovans. This script will keep track of them. 
+Note that you need a sequenced denisova population and the name has to start with "Seq_".
 
 Run the script to produce the following output of introgressed segments:
 
