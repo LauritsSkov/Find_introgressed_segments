@@ -4,6 +4,7 @@ import demes
 import demesdraw
 import matplotlib.pyplot as plt
 import argparse
+import numpy as np 
 
 # -----------------------------------------------------------------------------------------------------
 # Parameters for demography (plot with demes)
@@ -11,11 +12,9 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-demography", metavar='',help="File with demography", type=str, required=True)
-parser.add_argument("-outfile", metavar='',help="outplot name", type=str, default = 'Demography.pdf')
+parser.add_argument("-outfile", metavar='',help="outplot name", type=str, default = '/dev/stdout')
 
 args = parser.parse_args()
-
-
 
 
 def get_introgressed_segments(ts):
@@ -124,34 +123,92 @@ def get_introgressed_segments(ts):
 # Parameters for demography (plot with demes)
 # -----------------------------------------------------------------------------------------------------
 
-graph = demes.load(f"Demography1.yaml")
+graph = demes.load(args.demography)
 demography = msprime.Demography.from_demes(graph)
 
-CHROM_SIZE = 1_000_000
-gen_time = 29.0 
-rec_rate = 1.45e-8
-mutation_rate = 1.45e-8
 
 
 # Plot demography
 fig, ax = plt.subplots()  
-demesdraw.tubes(graph, ax=ax, seed=1, log_time=True)
+demesdraw.tubes(graph, ax=ax, seed=1)
 plt.tight_layout()
-plt.savefig(args.outfile)
-
-# Simulate
-ts = msprime.sim_ancestry(
-    samples={"NonAfrican": 2}, 
-    demography=demography,
-    sequence_length=CHROM_SIZE,
-    recombination_rate=rec_rate,
-    record_migrations=True,
-    random_seed=123)
+plt.savefig('Demography.pdf')
 
 
-introgressed_segments = get_introgressed_segments(ts)
+SAMPLES = {}
+SAMPLES['NonAfrican'] = 1
+for population_name in demography:
+    if population_name.startswith('Seq_'):
+        SAMPLES[population_name] = 1
 
-print('haplotype', 'pop', 'start', 'end',  'admix_event', 'admixtime', sep = '\t')
-for (haplotype, pop, start, end,  admix_event, admixtime) in introgressed_segments:
-    print(haplotype, pop, start, end,  admix_event, admixtime, sep = '\t')
+
+
+
+
+CHROM_SIZE = 10_000_000
+gen_time = 29.0 
+rec_rate = 1.45e-8
+mutation_rate = 1.45e-8
+
+with open(args.outfile, 'w') as out:
+    print('iteration', 'haplotype', 'pop', 'start', 'end','length', 'admix_event', 'admixtime', 'snps', 'shared', sep = '\t', file = out)
+
+    for iteration in range(1):
+
+        print(iteration)
+
+        # Simulate
+        ts = msprime.sim_ancestry(
+            samples=SAMPLES, 
+            demography=demography,
+            sequence_length=CHROM_SIZE,
+            recombination_rate=rec_rate,
+            record_migrations=True,
+            random_seed=iteration + 1)
+
+        introgressed_segments = get_introgressed_segments(ts)
+        introgressed_segments_temp = defaultdict(int)
+
+        mts = msprime.sim_mutations(ts, rate=mutation_rate, random_seed=1234)
+
+        for var in mts.variants():
+            
+            snp_time = var.site.mutations[0].time
+            if snp_time < 45000/gen_time or snp_time > 575000/gen_time:
+                continue 
+
+            ingroup = var.genotypes[0:2]
+            if np.sum(ingroup) == 0:
+                continue
+
+
+            pos = int(var.site.position)
+            archaic = np.sum(var.genotypes[2:])
+
+            #print(pos, ingroup, archaic, var.genotypes)
+            for haplotype_genotype_matrix, genotype in enumerate(ingroup):
+
+                if genotype == 0:
+                    continue
+
+                
+                for (haplotype, pop, start, end,  admix_event, admixtime) in introgressed_segments:
+                    if haplotype == haplotype_genotype_matrix and start < pos < end:
+                        ID = f'{haplotype}|{pop}|{start}|{end}'
+                        introgressed_segments_temp[ID, 'snps'] += 1
+                        
+                        if archaic > 0:
+                            introgressed_segments_temp[ID, 'archaic'] += 1
+                            
+
+            
+            
+        for (haplotype, pop, start, end,  admix_event, admixtime) in introgressed_segments:
+            ID = f'{haplotype}|{pop}|{start}|{end}'
+            snps = introgressed_segments_temp[ID, 'snps']
+            shared = introgressed_segments_temp[ID, 'archaic']
+            
+            print(iteration, haplotype, pop, start, end, end-start, admix_event, admixtime, snps, shared, sep = '\t', file = out)
+
+
 
