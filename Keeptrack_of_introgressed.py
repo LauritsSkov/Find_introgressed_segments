@@ -137,12 +137,16 @@ plt.savefig('Demography.pdf')
 
 SAMPLES = {}
 SAMPLES['NonAfrican'] = 1
+
+ARCHAIC_GENOME_SAMPLES = []
+
 for population_name in demography:
     if population_name.startswith('Seq_'):
         SAMPLES[population_name] = 1
+        ARCHAIC_GENOME_SAMPLES.append(population_name)
 
 
-
+print(SAMPLES)
 
 
 CHROM_SIZE = 10_000_000
@@ -151,7 +155,8 @@ rec_rate = 1.45e-8
 mutation_rate = 1.45e-8
 
 with open(args.outfile, 'w') as out:
-    print('iteration', 'haplotype', 'pop', 'start', 'end','length', 'admix_event', 'admixtime', 'snps', 'shared', sep = '\t', file = out)
+
+    print('iteration', 'haplotype', 'pop', 'start', 'end','length', 'admix_event', 'admixtime', 'snps', '\t'.join(ARCHAIC_GENOME_SAMPLES), sep = '\t', file = out)
 
     for iteration in range(1):
 
@@ -169,15 +174,21 @@ with open(args.outfile, 'w') as out:
         introgressed_segments = get_introgressed_segments(ts)
         introgressed_segments_temp = defaultdict(int)
 
+        Individuals = defaultdict(list)
+        for pop in ts.populations():
+            Individuals[pop.metadata['name']] = ts.get_samples(pop.id)
+
+
         mts = msprime.sim_mutations(ts, rate=mutation_rate, random_seed=1234)
 
         for var in mts.variants():
+
             
             snp_time = var.site.mutations[0].time
             if snp_time < 45000/gen_time or snp_time > 575000/gen_time:
                 continue 
 
-            ingroup = var.genotypes[0:2]
+            ingroup = var.genotypes[Individuals['NonAfrican']]
             if np.sum(ingroup) == 0:
                 continue
 
@@ -185,7 +196,12 @@ with open(args.outfile, 'w') as out:
             pos = int(var.site.position)
             archaic = np.sum(var.genotypes[2:])
 
-            #print(pos, ingroup, archaic, var.genotypes)
+            #print(archaic)
+            new_archaic = {x: np.sum(var.genotypes[Individuals[x]]) for x in ARCHAIC_GENOME_SAMPLES}
+            #print(new_archaic)
+            #dfdfd
+
+
             for haplotype_genotype_matrix, genotype in enumerate(ingroup):
 
                 if genotype == 0:
@@ -196,19 +212,19 @@ with open(args.outfile, 'w') as out:
                     if haplotype == haplotype_genotype_matrix and start < pos < end:
                         ID = f'{haplotype}|{pop}|{start}|{end}'
                         introgressed_segments_temp[ID, 'snps'] += 1
-                        
-                        if archaic > 0:
-                            introgressed_segments_temp[ID, 'archaic'] += 1
-                            
 
-            
+
+                        for seq_arch in ARCHAIC_GENOME_SAMPLES:
+                            if new_archaic[seq_arch] > 0:
+                                introgressed_segments_temp[ID, seq_arch] += 1
+
             
         for (haplotype, pop, start, end,  admix_event, admixtime) in introgressed_segments:
             ID = f'{haplotype}|{pop}|{start}|{end}'
             snps = introgressed_segments_temp[ID, 'snps']
-            shared = introgressed_segments_temp[ID, 'archaic']
+            shared = [str(introgressed_segments_temp[ID, seq_arch]) for seq_arch in ARCHAIC_GENOME_SAMPLES]
             
-            print(iteration, haplotype, pop, start, end, end-start, admix_event, admixtime, snps, shared, sep = '\t', file = out)
+            print(iteration, haplotype, pop, start, end, end-start, admix_event, admixtime, snps, '\t'.join(shared), sep = '\t', file = out)
 
 
 
