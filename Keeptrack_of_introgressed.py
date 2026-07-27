@@ -5,17 +5,11 @@ import demesdraw
 import matplotlib.pyplot as plt
 import argparse
 import numpy as np 
+import json 
 
 # -----------------------------------------------------------------------------------------------------
 # Parameters for demography (plot with demes)
 # -----------------------------------------------------------------------------------------------------
-
-parser = argparse.ArgumentParser()
-parser.add_argument("-demography", metavar='',help="File with demography", type=str, required=True)
-parser.add_argument("-outfile", metavar='',help="outplot name", type=str, default = '/dev/stdout')
-
-args = parser.parse_args()
-
 
 def get_introgressed_segments(ts):
     """
@@ -112,119 +106,184 @@ def get_introgressed_segments(ts):
 
 
 
-
-
-
-
-
-
-
 # -----------------------------------------------------------------------------------------------------
 # Parameters for demography (plot with demes)
 # -----------------------------------------------------------------------------------------------------
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-demography",  help="File with demography", type=str, required=True)
+parser.add_argument("-samples",  help="Which individuals to sample", type=str, required=True)
+parser.add_argument("-outfile",  help="outplot name", type=str, default = '/dev/stdout')
+parser.add_argument("-printdemography", help='print demography and save to pdf', type=str, default = '')
+parser.add_argument("-seed",  help="outplot name", type=int, default = 1234)
+parser.add_argument("-iterations",  help="number of independent iterations", type=int, default = 1)
+
+parser.add_argument("-genomesize",  help="outplot name", type=int, default = 10_000_000)
+parser.add_argument("-mutation_rate",  help="outplot name", type=float, default = 1.45e-8)
+parser.add_argument("-recombination_rate",  help="outplot name", type=float, default = 1.45e-8)
+
+parser.add_argument("-extrainfo", help='print snp positions and ages', action='store_true', default = False)
+parser.add_argument("-keepevents", help='filter events', type=str, default = '')
+
+args = parser.parse_args()
+
+# Plot demography
 graph = demes.load(args.demography)
 demography = msprime.Demography.from_demes(graph)
 
+if args.printdemography != '':
+    fig, ax = plt.subplots()  
+    demesdraw.tubes(graph, ax=ax, seed=1)
+    plt.tight_layout()
+    plt.savefig(args.printdemography)
 
 
-# Plot demography
-fig, ax = plt.subplots()  
-demesdraw.tubes(graph, ax=ax, seed=1)
-plt.tight_layout()
-plt.savefig('Demography.pdf')
+# Sample information
+with open(args.samples) as json_file:
+    data = json.load(json_file)
 
-
-SAMPLES = {}
-SAMPLES['NonAfrican'] = 1
-
+SAMPLES = []
+INGROUP_GENOME_SAMPLES = []
 ARCHAIC_GENOME_SAMPLES = []
+OUTGROUP_GENOME_SAMPLES = []
 
-for population_name in demography:
-    if population_name.startswith('Seq_'):
-        SAMPLES[population_name] = 1
-        ARCHAIC_GENOME_SAMPLES.append(population_name)
+for population_function, pop_to_sample in data.items():
+
+    for pop in pop_to_sample:
+
+        if population_function == 'Sequenced_Archaics' and pop['population'] not in ARCHAIC_GENOME_SAMPLES:
+            ARCHAIC_GENOME_SAMPLES.append(pop['population'])
+
+        if population_function == 'Ingroup' and pop['population'] not in INGROUP_GENOME_SAMPLES:
+            INGROUP_GENOME_SAMPLES.append(pop['population'])
+
+        if population_function == 'Outgroup' and pop['population'] not in OUTGROUP_GENOME_SAMPLES:
+            OUTGROUP_GENOME_SAMPLES.append(pop['population'])
+
+        SAMPLES.append(msprime.SampleSet(num_samples=pop['num_samples'], 
+                                         population=pop['population'], 
+                                         time=pop['time'], 
+                                         ploidy=pop['ploidy']))
+
+# remove really deep coal times
+max_time = 0
+for event in demography.events:
+    if type(event) == msprime.demography.PopulationSplit:
+        if event.ancestral in OUTGROUP_GENOME_SAMPLES and event.time > max_time:
+            max_time = event.time
 
 
-print(SAMPLES)
+# seach for some admixture events only
+if args.keepevents != '':
+    keywords = [x for x in args.keepevents.split(',')]
+else:
+    keywords = ['']
 
-
-CHROM_SIZE = 10_000_000
-gen_time = 29.0 
-rec_rate = 1.45e-8
-mutation_rate = 1.45e-8
 
 with open(args.outfile, 'w') as out:
 
-    print('iteration', 'haplotype', 'pop', 'start', 'end','length', 'admix_event', 'admixtime', 'snps', '\t'.join(ARCHAIC_GENOME_SAMPLES), sep = '\t', file = out)
+    HEADER = ['iteration', 'haplotype', 'pop', 'start', 'end','length', 'admix_event', 'admixtime', 'snps', '\t'.join(ARCHAIC_GENOME_SAMPLES)]
+    if args.extrainfo:
+        HEADER += ['snp_positions', 'snp_ages' , 'matches']
 
-    for iteration in range(1):
+    print(*HEADER, sep = '\t', file = out)
 
-        print(iteration)
+    for iteration in range(args.iterations):
 
         # Simulate
         ts = msprime.sim_ancestry(
             samples=SAMPLES, 
             demography=demography,
-            sequence_length=CHROM_SIZE,
-            recombination_rate=rec_rate,
+            sequence_length=args.genomesize,
+            recombination_rate=args.recombination_rate,
             record_migrations=True,
-            random_seed=iteration + 1)
+            random_seed=iteration + args.seed)
 
         introgressed_segments = get_introgressed_segments(ts)
-        introgressed_segments_temp = defaultdict(int)
+        introgressed_segments_dict = defaultdict(int)
+        introgressed_snp_ages = defaultdict(list)
 
-        Individuals = defaultdict(list)
+        Individuals_from_pop = defaultdict(list)
         for pop in ts.populations():
-            Individuals[pop.metadata['name']] = ts.get_samples(pop.id)
+            Individuals_from_pop[pop.metadata['name']] = ts.get_samples(pop.id)
 
+        mts = msprime.sim_mutations(ts, rate=args.mutation_rate, random_seed=args.seed)
 
-        mts = msprime.sim_mutations(ts, rate=mutation_rate, random_seed=1234)
+        # sort by left coordinate
+        introgressed_segments.sort(key=lambda x: x[2])
+
+        intro_segment_idx = 0
+        overlapping_introgressed_segmets = []
 
         for var in mts.variants():
 
-            
             snp_time = var.site.mutations[0].time
-            if snp_time < 45000/gen_time or snp_time > 575000/gen_time:
+            if snp_time > max_time: 
                 continue 
 
-            ingroup = var.genotypes[Individuals['NonAfrican']]
-            if np.sum(ingroup) == 0:
+            pos = int(var.site.position)
+
+            # add migrations that start before this tree ends
+            while intro_segment_idx < len(introgressed_segments) and introgressed_segments[intro_segment_idx][2] < pos:
+                overlapping_introgressed_segmets.append(introgressed_segments[intro_segment_idx])
+                intro_segment_idx += 1
+
+            # remove migrations that end before this tree starts
+            overlapping_introgressed_segmets = [x for x in overlapping_introgressed_segmets if x[3] > pos]
+
+            if not overlapping_introgressed_segmets:
                 continue
 
+            archaic_match_rates = {x: np.sum(var.genotypes[Individuals_from_pop[x]]) for x in ARCHAIC_GENOME_SAMPLES}
 
-            pos = int(var.site.position)
-            archaic = np.sum(var.genotypes[2:])
+            for (haplotype, pop, start, end,  admix_event, admixtime) in overlapping_introgressed_segmets:
 
-            #print(archaic)
-            new_archaic = {x: np.sum(var.genotypes[Individuals[x]]) for x in ARCHAIC_GENOME_SAMPLES}
-            #print(new_archaic)
-            #dfdfd
-
-
-            for haplotype_genotype_matrix, genotype in enumerate(ingroup):
-
-                if genotype == 0:
+                if var.genotypes[haplotype] == 0:
                     continue
 
+                #print(haplotype, pop, start, end,  admix_event, admixtime)
+                ID = f'{haplotype}|{pop}|{admix_event}|{admixtime}|{start}|{end}'
                 
-                for (haplotype, pop, start, end,  admix_event, admixtime) in introgressed_segments:
-                    if haplotype == haplotype_genotype_matrix and start < pos < end:
-                        ID = f'{haplotype}|{pop}|{start}|{end}'
-                        introgressed_segments_temp[ID, 'snps'] += 1
+
+                which_archaic_matches = []
+
+                for seq_arch in ARCHAIC_GENOME_SAMPLES:
+                    if archaic_match_rates[seq_arch] > 0:
+                        introgressed_segments_dict[ID, seq_arch] += 1
+                        which_archaic_matches.append(seq_arch)
+
+                if which_archaic_matches:
+                    which_archaic_matches = '|'.join(which_archaic_matches)
+                else:
+                    which_archaic_matches = 'none'
 
 
-                        for seq_arch in ARCHAIC_GENOME_SAMPLES:
-                            if new_archaic[seq_arch] > 0:
-                                introgressed_segments_temp[ID, seq_arch] += 1
+                introgressed_segments_dict[ID, 'snps'] += 1
+                introgressed_snp_ages[ID, 'snp_ages'].append(str(int(snp_time)))
+                introgressed_snp_ages[ID, 'snp_positions'].append(str(pos))
+                introgressed_snp_ages[ID, 'match'].append(which_archaic_matches)
 
-            
+
+        introgressed_segments.sort(key=lambda x: (x[0], x[2]))
         for (haplotype, pop, start, end,  admix_event, admixtime) in introgressed_segments:
-            ID = f'{haplotype}|{pop}|{start}|{end}'
-            snps = introgressed_segments_temp[ID, 'snps']
-            shared = [str(introgressed_segments_temp[ID, seq_arch]) for seq_arch in ARCHAIC_GENOME_SAMPLES]
             
-            print(iteration, haplotype, pop, start, end, end-start, admix_event, admixtime, snps, '\t'.join(shared), sep = '\t', file = out)
+
+            OUTPUT = [haplotype, pop, start, end,  admix_event, admixtime]
+            ID = f'{haplotype}|{pop}|{admix_event}|{admixtime}|{start}|{end}'
+            
+            snps = introgressed_segments_dict[ID, 'snps']
+            shared = [str(introgressed_segments_dict[ID, seq_arch]) for seq_arch in ARCHAIC_GENOME_SAMPLES]
+            OUTPUT += [snps, '\t'.join(shared)]
+
+            if args.extrainfo:
+                snp_ages = ','.join([x for x in introgressed_snp_ages[ID, 'snp_ages']])
+                snp_position = ','.join([x for x in introgressed_snp_ages[ID, 'snp_positions']])
+                matches = ','.join([x for x in introgressed_snp_ages[ID, 'match']])
+
+                OUTPUT += [snp_position, snp_ages, matches]
+
+            if any([keyword in admix_event for keyword in keywords]):
+                print(*OUTPUT, sep = '\t', file = out)
 
 
 
