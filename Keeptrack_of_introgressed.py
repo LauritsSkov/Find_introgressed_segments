@@ -110,20 +110,20 @@ def get_introgressed_segments(ts):
 # Parameters for demography (plot with demes)
 # -----------------------------------------------------------------------------------------------------
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-demography",  help="File with demography", type=str, required=True)
-parser.add_argument("-samples",  help="Which individuals to sample", type=str, required=True)
-parser.add_argument("-outfile",  help="outplot name", type=str, default = '/dev/stdout')
-parser.add_argument("-printdemography", help='print demography and save to pdf', type=str, default = '')
-parser.add_argument("-seed",  help="outplot name", type=int, default = 1234)
-parser.add_argument("-iterations",  help="number of independent iterations", type=int, default = 1)
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument("-demography", help="yaml file with demography", type=str, required=True)
+parser.add_argument("-samples", help="json file with samples", type=str, required=True)
+parser.add_argument("-outfile",  metavar = '', help="outplot name", type=str, default = '/dev/stdout')
+parser.add_argument("-printdemography", metavar = '', help='print demography and save to pdf', type=str, default = '')
+parser.add_argument("-seed",  metavar = '', help="set seed", type=int, default = 1234)
+parser.add_argument("-iterations",  metavar = '', help="number of independent iterations", type=int, default = 1)
 
-parser.add_argument("-genomesize",  help="outplot name", type=int, default = 10_000_000)
-parser.add_argument("-mutation_rate",  help="outplot name", type=float, default = 1.45e-8)
-parser.add_argument("-recombination_rate",  help="outplot name", type=float, default = 1.45e-8)
+parser.add_argument("-genomesize",  metavar = '', help="size of genome", type=int, default = 10_000_000)
+parser.add_argument("-mutation_rate",  metavar = '', help="genome wide mutation rate", type=float, default = 1.45e-8)
+parser.add_argument("-recombination_rate",  metavar = '', help="genomewide recombination rate", type=float, default = 1.45e-8)
 
 parser.add_argument("-extrainfo", help='print snp positions and ages', action='store_true', default = False)
-parser.add_argument("-keepevents", help='filter events', type=str, default = '')
+parser.add_argument("-keepevents", metavar = '',help='filter events containing this word (or more words comma separated like Nea,Den)', type=str, default = '')
 
 args = parser.parse_args()
 
