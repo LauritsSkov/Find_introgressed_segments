@@ -3,18 +3,18 @@ time_units: years
 generation_time: 29
 
 demes:
-- name: African
-  description: W. African branch leading to Africa
+- name: Outgroup
+  description: W. Outgroup branch leading to Africa
   start_time: .inf
   epochs:
   - {end_time: 575000, start_size: 1000}  
   - {end_time: 50000, start_size: 10000}
   - {end_time: 0, start_size: 20000}
 
-- name: NonAfrican
+- name: Ingroup
   description: Eurasian branch leading to British
   start_time: 50000
-  ancestors: [African]
+  ancestors: [Outgroup]
   epochs:
   - {end_time: 46000, start_size: 1000}
   - {end_time: 0, start_size: 1000, end_size: 50000}
@@ -22,7 +22,7 @@ demes:
 - name: Seq_DEN
   description: Seq_DEN
   start_time: 575000
-  ancestors: [African]
+  ancestors: [Outgroup]
   epochs:
   - {end_time: 420000, start_size: 5000}
   - {end_time: 0, start_size: 1000}
@@ -46,11 +46,10 @@ demes:
 
 pulses:
 - sources: [Distant_DEN]
-  dest: NonAfrican
+  dest: Ingroup
   time: 45000
   proportions: [0.2]
 - sources: [Close_DEN]
-  dest: NonAfrican
+  dest: Ingroup
   time: 44000
   proportions: [0.075]
-
