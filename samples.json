@@ -1,0 +1,8 @@
+{
+	"Ingroup":
+		[{"num_samples":1, "population": "Ingroup", "time": 0, "ploidy": 2}],
+	"Sequenced_Archaics":
+		[{"num_samples":1, "population": "Seq_DEN", "time": 0, "ploidy": 2}],
+	"Outgroup":
+		[{"num_samples":1, "population": "Outgroup", "time": 0, "ploidy": 2}]
+}

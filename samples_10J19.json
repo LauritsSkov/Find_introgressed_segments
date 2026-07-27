@@ -1,0 +1,11 @@
+{
+	"Ingroup":
+		[{"num_samples":1, "population": "Papuan", "time": 0, "ploidy": 2},
+		 {"num_samples":1, "population": "CHB", "time": 0, "ploidy": 2},
+		 {"num_samples":1, "population": "CEU", "time": 0, "ploidy": 2}],
+	"Sequenced_Archaics":
+		[{"num_samples":1, "population": "DenA", "time": 2068, "ploidy": 2},
+		 {"num_samples":1, "population": "NeaA", "time": 4137, "ploidy": 2}],
+	"Outgroup":
+		[{"num_samples":1, "population": "YRI", "time": 0, "ploidy": 2}]
+}
