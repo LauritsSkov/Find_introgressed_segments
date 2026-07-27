@@ -1,14 +1,29 @@
 # Find_introgressed_segments
-Find introgressed segments from an msprime simulation.
+Find introgressed segments from an msprime simulation. Here are two examples you can run:
 
 ```note
-python Keeptrack_of_introgressed.py -demography=Demography1.yaml 
+# try this
+python Keeptrack_of_introgressed.py -samples=samples.json -demography=Demography1.yaml
+
+# or this 
+python Keeptrack_of_introgressed.py -samples=samples_10J19.json -demography=PapuansOutOfAfrica_10J19.yaml -keepevents=Den,Nea
 ```
 
-First look at the Demography1.yaml. There are multiple introgression events Denisovans. This script will keep track of them. 
-Note that you need a sequenced denisova population and the name has to start with "Seq_".
+The program needs two files to run. A Demography file in yaml format and a list of samples in json format. 
+The list of samples needs to be in 3 types of classes: Ingroup, Sequenced_Archaics and Outgroup:
 
-Run the script to produce the following output of introgressed segments:
+```json
+{
+	"Ingroup":
+		[{"num_samples":1, "population": "Ingroup", "time": 0, "ploidy": 2}],
+	"Sequenced_Archaics":
+		[{"num_samples":1, "population": "Seq_DEN", "time": 0, "ploidy": 2}],
+	"Outgroup":
+		[{"num_samples":1, "population": "Outgroup", "time": 0, "ploidy": 2}]
+}
+```
+
+Below is an example output from the first scenario:
 
 ```note
 iteration	haplotype	pop	        start	    end	    length	admix_event	            admixtime	  snps	shared
