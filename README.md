@@ -10,9 +10,8 @@ usage: Keeptrack_of_introgressed.py [-h] -demography DEMOGRAPHY -samples
 
 optional arguments:
   -h, --help            show this help message and exit
-  -demography DEMOGRAPHY
-                        yaml file with demography (default: None)
-  -samples SAMPLES      json file with samples (default: None)
+  -demography           yaml file with demography (default: None) < REQUIRED
+  -samples              json file with samples (default: None)    < REQUIRED
   -outfile              outplot name (default: /dev/stdout)
   -printdemography      print demography and save to pdf (default: )
   -seed                 set seed (default: 1234)
