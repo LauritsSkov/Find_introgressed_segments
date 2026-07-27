@@ -12,7 +12,7 @@ optional arguments:
   -h, --help            show this help message and exit
   -demography           yaml file with demography (default: None) < REQUIRED
   -samples              json file with samples (default: None)    < REQUIRED
-  -outfile              outplot name (default: /dev/stdout)
+  -outfile              output name (default: /dev/stdout)
   -printdemography      print demography and save to pdf (default: )
   -seed                 set seed (default: 1234)
   -iterations           number of independent iterations (default: 1)
