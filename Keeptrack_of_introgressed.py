@@ -113,7 +113,7 @@ def get_introgressed_segments(ts):
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("-demography", help="yaml file with demography", type=str, required=True)
 parser.add_argument("-samples", help="json file with samples", type=str, required=True)
-parser.add_argument("-outfile",  metavar = '', help="outplot name", type=str, default = '/dev/stdout')
+parser.add_argument("-outfile",  metavar = '', help="output name", type=str, default = '/dev/stdout')
 parser.add_argument("-printdemography", metavar = '', help='print demography and save to pdf', type=str, default = '')
 parser.add_argument("-seed",  metavar = '', help="set seed", type=int, default = 1234)
 parser.add_argument("-iterations",  metavar = '', help="number of independent iterations", type=int, default = 1)
