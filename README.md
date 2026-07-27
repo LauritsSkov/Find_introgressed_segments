@@ -2,6 +2,32 @@
 Find introgressed segments from an msprime simulation. Here are two examples you can run:
 
 ```note
+usage: Keeptrack_of_introgressed.py [-h] -demography DEMOGRAPHY -samples
+                                    SAMPLES [-outfile] [-printdemography]
+                                    [-seed] [-iterations] [-genomesize]
+                                    [-mutation_rate] [-recombination_rate]
+                                    [-extrainfo] [-keepevents]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -demography DEMOGRAPHY
+                        yaml file with demography (default: None)
+  -samples SAMPLES      json file with samples (default: None)
+  -outfile              outplot name (default: /dev/stdout)
+  -printdemography      print demography and save to pdf (default: )
+  -seed                 set seed (default: 1234)
+  -iterations           number of independent iterations (default: 1)
+  -genomesize           size of genome (default: 10000000)
+  -mutation_rate        genome wide mutation rate (default: 1.45e-08)
+  -recombination_rate   genomewide recombination rate (default: 1.45e-08)
+  -extrainfo            print snp positions and ages (default: False)
+  -keepevents           filter events containing this word (or more words
+                        comma separated like Nea,Den) (default: )
+```
+
+
+
+```note
 # try this
 python Keeptrack_of_introgressed.py -samples=samples.json -demography=Demography1.yaml
 
