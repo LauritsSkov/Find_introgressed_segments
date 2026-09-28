@@ -125,6 +125,8 @@ parser.add_argument("-recombination_rate",  metavar = '', help="genomewide recom
 parser.add_argument("-extrainfo", help='print snp positions and ages', action='store_true', default = False)
 parser.add_argument("-keepevents", metavar = '',help='filter events containing this word (or more words comma separated like Nea,Den)', type=str, default = '')
 
+parser.add_argument("-tsfile",  metavar = '', help="output tsk file", type=str, default = '') # For testing comparison.
+
 args = parser.parse_args()
 
 # Plot demography
@@ -198,6 +200,9 @@ with open(args.outfile, 'w') as out:
             recombination_rate=args.recombination_rate,
             record_migrations=True,
             random_seed=iteration + args.seed)
+
+        if args.tsfile != '':
+            ts.dump(args.tsfile + f'.seed_{args.seed}.iteration_{iteration}.ts')
 
         introgressed_segments = get_introgressed_segments(ts)
         introgressed_segments_dict = defaultdict(int)
