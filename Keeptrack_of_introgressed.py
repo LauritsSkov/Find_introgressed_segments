@@ -125,7 +125,8 @@ parser.add_argument("-recombination_rate",  metavar = '', help="genomewide recom
 parser.add_argument("-extrainfo", help='print snp positions and ages', action='store_true', default = False)
 parser.add_argument("-keepevents", metavar = '',help='filter events containing this word (or more words comma separated like Nea,Den)', type=str, default = '')
 
-parser.add_argument("-tsfile",  metavar = '', help="output tsk file", type=str, default = '') # For testing comparison.
+parser.add_argument("-tsfile",  metavar = '', help="output tree sequence file", type=str, default = '')
+parser.add_argument("-mtsfile",  metavar = '', help="output mutated tree sequence file", type=str, default = '')
 
 args = parser.parse_args()
 
@@ -202,7 +203,7 @@ with open(args.outfile, 'w') as out:
             random_seed=iteration + args.seed)
 
         if args.tsfile != '':
-            ts.dump(args.tsfile + f'.seed_{args.seed}.iteration_{iteration}.ts')
+            ts.dump(args.tsfile + f'ts.seed_{args.seed}.iteration_{iteration}.trees')
 
         introgressed_segments = get_introgressed_segments(ts)
         introgressed_segments_dict = defaultdict(int)
@@ -213,6 +214,9 @@ with open(args.outfile, 'w') as out:
             Individuals_from_pop[pop.metadata['name']] = ts.get_samples(pop.id)
 
         mts = msprime.sim_mutations(ts, rate=args.mutation_rate, random_seed=args.seed)
+
+        if args.mtsfile != '':
+            mts.dump(args.mtsfile + f'mts.seed_{args.seed}.iteration_{iteration}.trees')
 
         # sort by left coordinate
         introgressed_segments.sort(key=lambda x: x[2])
@@ -273,7 +277,7 @@ with open(args.outfile, 'w') as out:
         for (haplotype, pop, start, end,  admix_event, admixtime) in introgressed_segments:
             
 
-            OUTPUT = [haplotype, pop, start, end,  admix_event, admixtime]
+            OUTPUT = [iteration, haplotype, pop, start, end, end - start, admix_event, admixtime]
             ID = f'{haplotype}|{pop}|{admix_event}|{admixtime}|{start}|{end}'
             
             snps = introgressed_segments_dict[ID, 'snps']
@@ -289,6 +293,3 @@ with open(args.outfile, 'w') as out:
 
             if any([keyword in admix_event for keyword in keywords]):
                 print(*OUTPUT, sep = '\t', file = out)
-
-
-
