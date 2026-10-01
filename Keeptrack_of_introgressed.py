@@ -203,7 +203,7 @@ with open(args.outfile, 'w') as out:
             random_seed=iteration + args.seed)
 
         if args.tsfile != '':
-            ts.dump(args.tsfile + f'ts.seed_{args.seed}.iteration_{iteration}.trees')
+            ts.dump(args.tsfile + f'.ts.seed_{args.seed}.iteration_{iteration}.trees')
 
         introgressed_segments = get_introgressed_segments(ts)
         introgressed_segments_dict = defaultdict(int)
@@ -216,7 +216,7 @@ with open(args.outfile, 'w') as out:
         mts = msprime.sim_mutations(ts, rate=args.mutation_rate, random_seed=args.seed)
 
         if args.mtsfile != '':
-            mts.dump(args.mtsfile + f'mts.seed_{args.seed}.iteration_{iteration}.trees')
+            mts.dump(args.mtsfile + f'.mts.seed_{args.seed}.iteration_{iteration}.trees')
 
         # sort by left coordinate
         introgressed_segments.sort(key=lambda x: x[2])
