@@ -16,3 +16,9 @@ Great, with that bug fixed, now I want to actually compare how Skov's method cal
 python Keeptrack_of_introgressed.py -samples=samples.json -demography=Demography1.yaml -outfile=tests/Demography1_segment_test.txt -iterations=10 -tsfile=tests/Demography1
 python Keeptrack_of_introgressed.py -samples=samples_10J19.json -demography=PapuansOutOfAfrica_10J19.yaml -outfile=tests/PapuansOutOfAfrica_10J19_segment_test.txt -iterations=10 -tsfile=tests/PapuansOutOfAfrica_10J19
 ```
+
+So, our two methods call the same number of segments, but `Keeptrack_of_introgressed.py` calls slightly longer segments when the migrating tract does not fully overlap the marginal tree (see `tests.ipynb` for more details). I believe the fix is to simply change `introgressed_seg[l, admixinfo].append([tree_left, tree_right])` (on line 81 in commit `104fa43`) to `introgressed_seg[l, admixinfo].append([max(tree_left, int(mr.left)), min(tree_right, int(mr.right))])`. I validate this by running the following commands from the root directory:
+```bash
+python Keeptrack_of_introgressed.py -samples=samples.json -demography=Demography1.yaml -outfile=tests/Demography1_segment_fixed.txt -iterations=10
+python Keeptrack_of_introgressed.py -samples=samples_10J19.json -demography=PapuansOutOfAfrica_10J19.yaml -outfile=tests/PapuansOutOfAfrica_10J19_segment_fixed.txt -iterations=10
+```

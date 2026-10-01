@@ -22,6 +22,12 @@ optional arguments:
   -extrainfo            print snp positions and ages (default: False)
   -keepevents           filter events containing this word (or more words
                         comma separated like Nea,Den) (default: )
+  -tsfile               output tree sequence file as
+                        {tsfile}.ts.seed_{seed}.iteration_{iteration}.trees 
+                        (default: )
+  -mtsfile              output mutated tree sequence file as
+                      {mtsfile}.mts.seed_{seed}.iteration_{iteration}.trees 
+                        (default: )
 ```
 
 

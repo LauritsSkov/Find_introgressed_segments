@@ -77,8 +77,8 @@ def get_introgressed_segments(ts):
             leaves = [x for x in tree.leaves(mr.node)]
 
             for l in leaves:
-                #if l in Testpopulation:
-                introgressed_seg[l, admixinfo].append([tree_left, tree_right])
+                #if l in Testpopulation records the overlap between the migrating segment and the marginal tree:
+                introgressed_seg[l, admixinfo].append([max(tree_left, int(mr.left)), min(tree_right, int(mr.right))])
 
     
     def merge_overlapping(temp_tuple):
@@ -125,8 +125,8 @@ parser.add_argument("-recombination_rate",  metavar = '', help="genomewide recom
 parser.add_argument("-extrainfo", help='print snp positions and ages', action='store_true', default = False)
 parser.add_argument("-keepevents", metavar = '',help='filter events containing this word (or more words comma separated like Nea,Den)', type=str, default = '')
 
-parser.add_argument("-tsfile",  metavar = '', help="output tree sequence file", type=str, default = '')
-parser.add_argument("-mtsfile",  metavar = '', help="output mutated tree sequence file", type=str, default = '')
+parser.add_argument("-tsfile",  metavar = '', help="output tree sequence file as {tsfile}.ts.seed_{seed}.iteration_{iteration}.trees", type=str, default = '')
+parser.add_argument("-mtsfile",  metavar = '', help="output mutated tree sequence file as {mtsfile}.mts.seed_{seed}.iteration_{iteration}.trees", type=str, default = '')
 
 args = parser.parse_args()
 
