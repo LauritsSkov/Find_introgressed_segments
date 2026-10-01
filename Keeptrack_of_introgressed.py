@@ -77,8 +77,8 @@ def get_introgressed_segments(ts):
             leaves = [x for x in tree.leaves(mr.node)]
 
             for l in leaves:
-                #if l in Testpopulation:
-                introgressed_seg[l, admixinfo].append([tree_left, tree_right])
+                #if l in Testpopulation records the overlap between the migrating segment and the marginal tree:
+                introgressed_seg[l, admixinfo].append([max(tree_left, int(mr.left)), min(tree_right, int(mr.right))])
 
     
     def merge_overlapping(temp_tuple):
@@ -124,6 +124,9 @@ parser.add_argument("-recombination_rate",  metavar = '', help="genomewide recom
 
 parser.add_argument("-extrainfo", help='print snp positions and ages', action='store_true', default = False)
 parser.add_argument("-keepevents", metavar = '',help='filter events containing this word (or more words comma separated like Nea,Den)', type=str, default = '')
+
+parser.add_argument("-tsfile",  metavar = '', help="output tree sequence file as {tsfile}.ts.seed_{seed}.iteration_{iteration}.trees", type=str, default = '')
+parser.add_argument("-mtsfile",  metavar = '', help="output mutated tree sequence file as {mtsfile}.mts.seed_{seed}.iteration_{iteration}.trees", type=str, default = '')
 
 args = parser.parse_args()
 
@@ -199,6 +202,9 @@ with open(args.outfile, 'w') as out:
             record_migrations=True,
             random_seed=iteration + args.seed)
 
+        if args.tsfile != '':
+            ts.dump(args.tsfile + f'.ts.seed_{args.seed}.iteration_{iteration}.trees')
+
         introgressed_segments = get_introgressed_segments(ts)
         introgressed_segments_dict = defaultdict(int)
         introgressed_snp_ages = defaultdict(list)
@@ -208,6 +214,9 @@ with open(args.outfile, 'w') as out:
             Individuals_from_pop[pop.metadata['name']] = ts.get_samples(pop.id)
 
         mts = msprime.sim_mutations(ts, rate=args.mutation_rate, random_seed=args.seed)
+
+        if args.mtsfile != '':
+            mts.dump(args.mtsfile + f'.mts.seed_{args.seed}.iteration_{iteration}.trees')
 
         # sort by left coordinate
         introgressed_segments.sort(key=lambda x: x[2])
@@ -268,7 +277,7 @@ with open(args.outfile, 'w') as out:
         for (haplotype, pop, start, end,  admix_event, admixtime) in introgressed_segments:
             
 
-            OUTPUT = [haplotype, pop, start, end,  admix_event, admixtime]
+            OUTPUT = [iteration, haplotype, pop, start, end, end - start, admix_event, admixtime]
             ID = f'{haplotype}|{pop}|{admix_event}|{admixtime}|{start}|{end}'
             
             snps = introgressed_segments_dict[ID, 'snps']
@@ -284,6 +293,3 @@ with open(args.outfile, 'w') as out:
 
             if any([keyword in admix_event for keyword in keywords]):
                 print(*OUTPUT, sep = '\t', file = out)
-
-
-
